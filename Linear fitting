@@ -1,0 +1,23 @@
+install.packages("readxl")
+install.packages("openxlsx")
+library(readxl)
+library(openxlsx)
+data <- read_excel("E:/KK1.xlsx")
+wb <- createWorkbook()
+addWorksheet(wb, "RE")
+years <- data[[1]]
+result <- data.frame(Column = character(),
+                     Slope = numeric(),
+                     Intercept = numeric(),
+                     R_squared = numeric(),
+                     stringsAsFactors = FALSE)
+for (col in names(data)[-1]) {
+  y <- data[[col]]
+  lm_result <- lm(y ~ as.numeric(years))
+  slope <- coef(lm_result)[2] 
+  intercept <- coef(lm_result)[1]  
+  r_squared <- summary(lm_result)$r.squared 
+     result <- rbind(result, data.frame(Column = col, Slope = slope, Intercept = intercept, R_squared = r_squared))
+}
+writeData(wb, "RE", result)
+saveWorkbook(wb, "E:/output.xlsx", overwrite = TRUE)
