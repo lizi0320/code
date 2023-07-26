@@ -1,0 +1,82 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+def Non_donminated_sorting(chroms_obj_record):
+    # non-dominated sorting
+    length = len(chroms_obj_record)
+    f = np.reshape(chroms_obj_record,(length,len(chroms_obj_record[0])))
+    Rank = np.zeros(length)  # [0. 2. 1. 1. 1. 0. 0. 0. 2. 1.]
+    front = []     # [[0, 5, 6, 7], [2, 3, 4, 9], [1, 8]]
+    rank = 0
+    n_p = np.zeros(length)
+    s_p = []
+    for p in range(length):
+        a = (f[p, :] - f[:, :] <= 0).all(axis=1)
+        b = (~((f[p, :] - f[:, :] == 0).all(axis=1)))
+        loc = np.where(a & b)[0].tolist()
+        s_p.append(loc)
+        temp1 = np.where(((f[p, :] - f[:, :] >= 0).all(axis=1)) & (~((f[p, :] - f[:, :] == 0).all(axis=1))))[0]
+        n_p[p] = len(temp1)  # P is the number of domination
+    #Add First Frontier
+    front.append(list(np.where(n_p == 0)[0]))
+    while len(front[rank]) != 0:    # Generate Other Frontiers
+        elementset = front[rank]
+        n_p[elementset] = float('inf')
+        Rank[elementset] = rank
+        rank += 1
+        for i in elementset:
+            temp = s_p[i]
+            n_p[temp] -= 1
+        front.append(list(np.where(n_p == 0)[0]))
+    front.pop()
+    # First Frontier
+    parero_solution_obj = []
+    first = front[0]
+    for index in first:
+        parero_solution_obj.append(chroms_obj_record[index])
+    parero_solution_obj = np.array(parero_solution_obj)
+    parero_solution_obj[:, 0] *= -1
+    parero_solution_obj[:, 1] *= -1
+    print(f"Obtain the number of non dominated frontiers as:{len(parero_solution_obj)}个")
+    print(front[0])
+    print(f'Front edge of layer {1}：{parero_solution_obj}')
+    for l in range(1,len(front)):
+        layer = []
+        for index in front[l]:
+            layer.append(chroms_obj_record[index])
+        layer = np.array(layer)
+        layer[:, 0] *= -1
+        layer[:, 1] *= -1
+        print(f'Front of layer {l+1}：{front[l]}')
+        print(f'Front of layer {l+1}：{layer}')
+    return parero_solution_obj
+if __name__ == "__main__":
+    data = pd.read_excel(r"E:\kk1.xlsx").iloc[:, 1:4]
+    data.iloc[:, 0] = -data.iloc[:, 0]
+    data.iloc[:, 1] = -data.iloc[:, 1]
+    data = np.array(data).tolist()
+    front = Non_donminated_sorting(data)
+    # Define coordinate axis
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection='3d')
+    data = np.array(data)
+    data[:, 0] *= -1
+    data[:, 1] *= -1
+    # Draw the entire population
+    xd = [item[0] for item in data]
+    yd = [item[1] for item in data]
+    zd = [item[2] for item in data]
+    ax1.scatter3D(xd, yd, zd, marker='x', s=60, c='red')  # Draw a scatter plot
+    # Draw Frontiers
+    xd = [item[0] for item in front]
+    yd = [item[1] for item in front]
+    zd = [item[2] for item in front]
+    ax1.scatter3D(xd, yd, zd, marker='o', s=60, edgecolors='green')  # Draw a scatter plot
+    ax1.set_xlabel("f1", fontsize=13, labelpad=8)
+    ax1.set_ylabel("f2", fontsize=13, labelpad=8)
+    ax1.set_zlabel("f3", fontsize=13, labelpad=10)
+    # Adjust the scale size of the coordinate axis
+    plt.tick_params(labelsize=12, pad=5)
+    ax1.view_init(azim=-107, elev=23)
+    ax1.grid(False)
+    plt.show()
