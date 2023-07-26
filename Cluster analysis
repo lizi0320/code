@@ -1,1 +1,21 @@
-
+install.packages(c("ggplot2", "cluster", "mclust"))
+library(ggplot2)
+library(cluster)
+library(mclust)
+install.packages("readxl")
+install.packages("openxlsx")
+library(readxl)
+library(openxlsx)
+data <- read_excel("E:/KK.xlsx")  
+indicators <- data[, c("c", "k", "SD")]
+k_range <- 2:10
+bics <- sapply(k_range, function(k) {
+  kmeans_result <- kmeans(indicators, centers = k)
+  mclust_result <- Mclust(indicators, G = k)
+  BIC(mclust_result)
+})
+plot(k_range, bics, type = "b", xlab = "Number of Clusters", ylab = "BIC")
+best_k <- k_range[which.min(bics)]
+print(paste("Best number of clusters:", best_k))
+kmeans_result <- kmeans(indicators, centers = 7)
+print(kmeans_result)
