@@ -1,0 +1,21 @@
+library(openxlsx)
+data <- read.xlsx("E:/KK1.xlsx", sheet = "Sheet1")  
+years <- data[, 1]
+time_series <- data[, 2:32]
+output_file <- "E:/decomposed_data.xlsx"
+wb <- createWorkbook()
+trend_sheet <- addWorksheet(wb, "Trend Items")
+trend_data <- data.frame(year = years)
+random_sheet <- addWorksheet(wb, "Random Items")
+random_data <- data.frame(year= years)
+for (i in 1:ncol(time_series)) {
+  ts_data <- ts(time_series[, i], frequency = 1)
+    trend <- loess(ts_data ~ time(ts_data))
+    trend_values <- trend$fitted
+    residual <- ts_data - trend_values
+    trend_data <- cbind(trend_data, trend_values)
+    random_data <- cbind(random_data, residual)
+}
+writeData(wb, "Trend Items", trend_data)
+writeData(wb, "Random Items", random_data)
+saveWorkbook(wb, output_file)
